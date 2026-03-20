@@ -1,0 +1,7 @@
+# Força LF para todos os arquivos de texto — necessário para rodar no Linux (VPS)
+* text=auto eol=lf
+
+# Arquivos binários — sem conversão
+*.png binary
+*.jpg binary
+*.ico binary

@@ -1,0 +1,50 @@
+services:
+
+  # ----------------------------
+  # Banco de dados PostgreSQL
+  # ----------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: sienge_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PG_DATABASE}
+      POSTGRES_USER: ${PG_USERNAME}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"   # só acessível via SSH tunnel — não exposto na internet
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+
+  # ----------------------------
+  # Job de sync (roda e encerra)
+  # Disparado pelo cron, não fica rodando o tempo todo
+  # ----------------------------
+  sync-job:
+    build: .
+    container_name: sienge_sync_job
+    env_file: .env
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+    depends_on:
+      - postgres
+    volumes:
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # máximo 2 dos 4 núcleos
+          memory: 4G       # máximo 4GB dos 16GB
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    restart: "no"           # job pontual — não reinicia sozinho
+
+volumes:
+  postgres_data:
